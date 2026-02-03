@@ -3,33 +3,41 @@ const { chromium } = require("playwright");
 const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
 
-const URL = "https://www.skport.com/en/sign-in";
+const LOGIN_URL = "https://www.skport.com/en/sign-in";
+
+// XPath nút điểm danh (của bạn)
 const CHECKIN_XPATH = '//*[@id="content-container"]/div[1]/div[4]/div[1]/div/div[1]';
 
 (async () => {
+  console.log("🤖 Bot bắt đầu chạy...");
+
   if (!EMAIL || !PASSWORD) {
     console.log("❌ Thiếu EMAIL hoặc PASSWORD!");
     process.exit(1);
   }
 
-  console.log("🤖 Bot bắt đầu chạy...");
-
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
   try {
-    console.log("🌐 Mở trang...");
-    await page.goto(URL, { waitUntil: "networkidle" });
+    // 1️⃣ Mở trang login
+    console.log("🌐 Mở trang login...");
+    await page.goto(LOGIN_URL, { waitUntil: "networkidle" });
 
-    // login
-    await page.fill('input[type="text"]', EMAIL);
+    // 2️⃣ Nhập email & password
+    console.log("✍️ Nhập tài khoản...");
+    await page.fill('input[name="email"]', EMAIL);
     await page.fill('input[type="password"]', PASSWORD);
+
+    // 3️⃣ Click login
+    console.log("🔑 Đăng nhập...");
     await page.click('button[type="submit"]');
+
+    // đợi login xong
     await page.waitForTimeout(5000);
 
-    console.log("🔑 Login xong!");
-
-    // click điểm danh
+    // 4️⃣ Click điểm danh
+    console.log("🎯 Tìm nút điểm danh...");
     try {
       await page.waitForXPath(CHECKIN_XPATH, { timeout: 5000 });
       const [btn] = await page.$x(CHECKIN_XPATH);
@@ -40,7 +48,7 @@ const CHECKIN_XPATH = '//*[@id="content-container"]/div[1]/div[4]/div[1]/div/div
       } else {
         console.log("⚠️ Không tìm thấy nút điểm danh!");
       }
-    } catch {
+    } catch (e) {
       console.log("⏳ Có thể đã điểm danh hoặc chưa tới giờ!");
     }
 
