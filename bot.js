@@ -3,84 +3,51 @@ const { chromium } = require("playwright");
 const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const URL = "https://www.skport.com/en/sign-in";
+const CHECKIN_XPATH = '//*[@id="content-container"]/div[1]/div[4]/div[1]/div/div[1]';
 
-// ⏰ chờ tới 23:30
-async function waitUntil2330() {
-  while (true) {
-    const now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes();
-
-    if (h === 23 && m >= 30) {
-      console.log("🎯 Đã tới 23:30, bắt đầu điểm danh!");
-      break;
-    }
-
-    console.log(`⏳ Chưa tới giờ (${h}:${m}) -> chờ 30 giây...`);
-    await sleep(30000);
-  }
-}
-
-async function main() {
-  console.log("🤖 Bot bắt đầu chạy...");
-
+(async () => {
   if (!EMAIL || !PASSWORD) {
     console.log("❌ Thiếu EMAIL hoặc PASSWORD!");
-    return;
+    process.exit(1);
   }
 
-  await waitUntil2330();
+  console.log("🤖 Bot bắt đầu chạy...");
 
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
 
   try {
-    console.log("🌐 Mở trang game...");
-    
-    // ✅ LINK LOGIN = LINK ĐIỂM DANH
-    await page.goto("https://game.skport.com/endfield/sign-in", {
-      waitUntil: "networkidle"
-    });
+    console.log("🌐 Mở trang...");
+    await page.goto(URL, { waitUntil: "networkidle" });
 
-    console.log("🔐 Nhập email...");
-    await page.fill('input[name="email"]', EMAIL);
-
-    console.log("🔐 Nhập mật khẩu...");
+    // login
+    await page.fill('input[type="text"]', EMAIL);
     await page.fill('input[type="password"]', PASSWORD);
-
-    // đợi nút login enable
-    await page.waitForFunction(() => {
-      const btn = document.querySelector('button[type="submit"]');
-      return btn && !btn.disabled;
-    });
-
-    console.log("👉 Click login...");
     await page.click('button[type="submit"]');
-
     await page.waitForTimeout(5000);
-    console.log("✅ Login xong!");
 
-    console.log("🔎 Tìm ô điểm danh hôm nay...");
+    console.log("🔑 Login xong!");
 
-    // 👉 tìm ô chưa điểm danh (icon sáng)
-    const checkinBtn = await page.$('img[src*="endfield_attendance"]');
+    // click điểm danh
+    try {
+      await page.waitForXPath(CHECKIN_XPATH, { timeout: 5000 });
+      const [btn] = await page.$x(CHECKIN_XPATH);
 
-    if (!checkinBtn) {
-      console.log("⏳ Chưa tới giờ hoặc đã điểm danh rồi.");
-    } else {
-      await checkinBtn.click();
-      console.log("🎉 Click điểm danh!");
+      if (btn) {
+        await btn.click();
+        console.log("✅ Điểm danh thành công!");
+      } else {
+        console.log("⚠️ Không tìm thấy nút điểm danh!");
+      }
+    } catch {
+      console.log("⏳ Có thể đã điểm danh hoặc chưa tới giờ!");
     }
 
   } catch (err) {
     console.log("❌ Lỗi:", err.message);
+  } finally {
+    await browser.close();
+    console.log("🤖 Bot kết thúc!");
   }
-
-  await browser.close();
-  console.log("😴 Bot kết thúc.");
-}
-
-main();
+})();
