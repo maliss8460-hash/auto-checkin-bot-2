@@ -2,7 +2,7 @@ name: Auto Checkin Bot
 
 on:
   schedule:
-    - cron: "30 16 * * *"   # 23:30 giờ VIETNAM
+    - cron: "30 16 * * *" # 23:30 giờ VIETNAM
   workflow_dispatch:
 
 jobs:
@@ -22,4 +22,7 @@ jobs:
         run: npm install
 
       - name: Run bot
+        env:
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
         run: node bot.js
