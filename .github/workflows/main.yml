@@ -2,7 +2,7 @@ name: Auto Checkin Bot
 
 on:
   schedule:
-    - cron: "30 16 * * *"   # 23:30 giờ VN
+    - cron: "30 16 * * *"   # 23:30 giờ VIETNAM
   workflow_dispatch:
 
 jobs:
