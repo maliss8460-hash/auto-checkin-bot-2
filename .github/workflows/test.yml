@@ -1,13 +1,12 @@
-name: Test Cron
+name: Test Cron Only
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # mỗi 5 phút
-  workflow_dispatch:
+    - cron: "*/2 * * * *"   # chạy mỗi 2 phút (dễ test)
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Print time
-        run: echo "Cron working at $(date)"
+      - name: Show time
+        run: echo "Cron is running at $(date)"
