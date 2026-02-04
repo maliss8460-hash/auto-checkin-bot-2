@@ -4,7 +4,7 @@ const fs = require("fs");
 const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
 
-const LOGIN_URL = "https://www.skport.com/en/sign-in";
+const LOGIN_URL = "https://game.skport.com/endfield/sign-in";
 const CHECKIN_XPATH = '//*[@id="content-container"]/div[1]/div[4]/div[1]/div/div[1]';
 
 (async () => {
@@ -51,3 +51,4 @@ const CHECKIN_XPATH = '//*[@id="content-container"]/div[1]/div[4]/div[1]/div/div
     console.log("🤖 Bot kết thúc!");
   }
 })();
+
