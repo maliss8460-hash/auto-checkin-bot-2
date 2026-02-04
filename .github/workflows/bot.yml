@@ -2,8 +2,8 @@ name: Auto Check-in Bot
 
 on:
   schedule:
-    # chạy mỗi ngày lúc 23:30 (giờ VN = UTC+7 → UTC = 16:30)
-    - cron: "30 16 * * *"
+    # chạy mỗi ngày lúc 00:05 (giờ VN = UTC+7)
+    - cron: "5 17 * * *"
   workflow_dispatch: # cho phép chạy tay
 
 jobs:
@@ -31,7 +31,8 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
         run: node bot.js
 
-      - name: Upload screenshot if exists
+      # upload screenshot nếu có lỗi
+      - name: Upload error screenshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -39,9 +40,12 @@ jobs:
           path: error.png
           if-no-files-found: ignore
 
+      # upload tất cả ảnh screenshot
       - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: |
             *.png
+          if-no-files-found: ignore
