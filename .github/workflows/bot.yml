@@ -1,10 +1,14 @@
 name: Auto Check-in Bot
 
 on:
+  workflow_dispatch: # chạy tay
   schedule:
-    # chạy mỗi ngày lúc 00:05 (giờ VN = UTC+7)
-    - cron: "5 17 * * *"
-  workflow_dispatch: # cho phép chạy tay
+    # 00:15 VN = 17:15 UTC (ngày hôm trước)
+    - cron: "15 17 * * *"
+    # 23:30 VN = 16:30 UTC
+    - cron: "30 16 * * *"
+  push:
+    branches: [ "main" ] # đánh thức repo
 
 jobs:
   run-bot:
@@ -46,6 +50,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: |
-            *.png
+          path: "*.png"
           if-no-files-found: ignore
