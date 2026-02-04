@@ -2,11 +2,11 @@ name: Keep Alive Bot
 
 on:
   schedule:
-    - cron: "* * * * *"
+    - cron: "*/1 * * * *"
   workflow_dispatch:
 
 jobs:
-  keepalive:
+  test:
     runs-on: ubuntu-latest
     steps:
       - run: echo "alive"
