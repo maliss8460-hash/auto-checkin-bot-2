@@ -9,22 +9,6 @@ async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function clickShowAll(frame) {
-  console.log("🔍 Tìm nút 'Xem tất cả phần thưởng'...");
-  try {
-    const btn = await frame.waitForSelector('text="Xem tất cả phần thưởng"', {
-      timeout: 8000,
-    });
-    if (btn) {
-      await btn.click();
-      console.log("✅ Đã bấm 'Xem tất cả phần thưởng'");
-      await sleep(3000);
-    }
-  } catch {
-    console.log("⚠️ Không thấy nút (có thể đã mở)");
-  }
-}
-
 (async () => {
   console.log("🤖 Bot start...");
 
@@ -61,47 +45,56 @@ async function clickShowAll(frame) {
 
     await sleep(5000);
 
-    // ===== SHOW ALL DAYS =====
-    await clickShowAll(frameTarget);
+    // ===== CLICK "SHOW ALL REWARDS" =====
+    try {
+      console.log("🔍 Tìm nút Show All Rewards...");
+      const showAllBtn = await frameTarget.waitForSelector(
+        'span:has-text("Show All Rewards")',
+        { timeout: 10000 }
+      );
 
-    console.log("🎯 Bắt đầu duyệt các ngày...");
+      await showAllBtn.click();
+      console.log("✅ Đã click Show All Rewards");
 
-    // lấy tất cả ô ngày
-    const dayBoxes = await frameTarget.$$(`div:has-text("Day"), div:has-text("Ngày")`);
+      await sleep(3000);
 
-    console.log("📦 Tổng số ô tìm được:", dayBoxes.length);
+      // chụp màn hình sau khi mở
+      await page.screenshot({ path: "after_show_all.png", fullPage: true });
+      console.log("📸 Đã chụp ảnh: after_show_all.png");
 
-    for (let i = 0; i < dayBoxes.length; i++) {
-      try {
-        const box = dayBoxes[i];
-
-        await box.scrollIntoViewIfNeeded();
-        await sleep(500);
-
-        const text = await box.innerText();
-        console.log(`👉 Check: ${text.trim()}`);
-
-        // kiểm tra đã nhận hay chưa bằng icon tick hoặc class
-        const isChecked = await box.evaluate(el => {
-          return el.innerHTML.includes("check") || el.className.includes("checked");
-        });
-
-        if (isChecked) {
-          console.log("✅ Đã nhận → bỏ qua");
-          continue;
-        }
-
-        // nếu chưa nhận → click
-        console.log("🟡 Ngày CHƯA nhận → click!");
-        await box.click();
-        await sleep(3000);
-
-        console.log("🎉 Điểm danh xong!");
-        break; // dừng lại sau khi click ngày chưa nhận
-      } catch (err) {
-        console.log("⚠️ Lỗi day", i, err.message);
-      }
+    } catch (err) {
+      console.log("⚠️ Không thấy nút Show All Rewards (có thể đã mở)");
     }
+
+    // ===== FIND ALL DAYS CHƯA NHẬN =====
+    console.log("🎯 Tìm ngày chưa điểm danh...");
+
+    const unclaimedDays = await frameTarget.$$('div.sc-guPfGz.erDkLw');
+
+    console.log("🟡 Số ngày chưa nhận:", unclaimedDays.length);
+
+    if (unclaimedDays.length === 0) {
+      console.log("🎉 Không còn ngày nào chưa nhận!");
+      return;
+    }
+
+    // click ngày đầu tiên chưa nhận
+    const targetDay = unclaimedDays[0];
+
+    await targetDay.scrollIntoViewIfNeeded();
+    await sleep(1000);
+
+    const dayText = await targetDay.innerText();
+    console.log("👉 Click:", dayText);
+
+    await targetDay.click();
+    await sleep(3000);
+
+    // screenshot sau khi điểm danh
+    await page.screenshot({ path: "after_claim.png", fullPage: true });
+    console.log("📸 Đã chụp ảnh: after_claim.png");
+
+    console.log("🎉 Điểm danh thành công!");
 
   } catch (err) {
     console.log("❌ Lỗi:", err.message);
