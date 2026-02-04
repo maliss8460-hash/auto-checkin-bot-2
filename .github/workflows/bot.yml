@@ -38,3 +38,10 @@ jobs:
           name: error-image
           path: error.png
           if-no-files-found: ignore
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: |
+            *.png
