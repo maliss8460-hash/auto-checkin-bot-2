@@ -2,13 +2,11 @@ name: Keep Alive Bot
 
 on:
   schedule:
-  - cron: "* * * * *"
-
+    - cron: "* * * * *"
   workflow_dispatch:
 
 jobs:
   keepalive:
     runs-on: ubuntu-latest
     steps:
-      - name: Wake up repo
-        run: echo "repo is alive"
+      - run: echo "alive"
