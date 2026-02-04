@@ -28,61 +28,59 @@ const LOGIN_URL = "https://game.skport.com/endfield/sign-in";
     console.log("⏳ Chờ sau login 30s...");
     await page.waitForTimeout(30000);
 
-    // ====== TÌM FRAME (nếu có iframe) ======
-    let frames = page.frames();
+    // ===== tìm frame nếu có =====
     let targetFrame = page;
-
-    if (frames.length > 1) {
-      console.log("🧩 Phát hiện iframe, thử tìm frame chứa điểm danh...");
-      for (const f of frames) {
-        const html = await f.content();
-        if (html.includes("Day")) {
-          targetFrame = f;
-          console.log("✅ Đã chọn iframe phù hợp!");
-          break;
-        }
-      }
-    }
-
-    console.log("🎯 Scan ô điểm danh màu vàng...");
-
-    const boxes = await targetFrame.$$("div");
-    let clicked = false;
-
-    for (const b of boxes) {
-      const bg = await b.evaluate(el => getComputedStyle(el).backgroundColor);
-      const text = await b.evaluate(el => el.innerText || "");
-
-      // tìm ô có chữ Day + màu vàng (ước lượng)
-      if (
-        text.includes("Day") &&
-        (bg.includes("255, 215") || bg.includes("255, 255") || bg.includes("gold"))
-      ) {
-        await b.click();
-        console.log("✅ Đã click ô điểm danh:", text.trim());
-        clicked = true;
+    for (const f of page.frames()) {
+      const html = await f.content();
+      if (html.includes("Day")) {
+        targetFrame = f;
+        console.log("✅ Đã tìm thấy iframe điểm danh!");
         break;
       }
     }
 
-    if (!clicked) {
-      console.log("⚠️ Không tìm thấy ô vàng, thử click ô có chữ Day gần nhất...");
+    console.log("🔍 Tìm tất cả ô Day...");
 
-      const fallback = await targetFrame.$('div:has-text("Day")');
-      if (fallback) {
-        await fallback.click();
-        console.log("✅ Click fallback Day box!");
-      } else {
-        console.log("❌ Không tìm thấy ô điểm danh!");
+    const dayBoxes = await targetFrame.$$(`div:has-text("Day")`);
+    console.log("📦 Số ô tìm được:", dayBoxes.length);
+
+    let count = 0;
+
+    for (const box of dayBoxes) {
+      try {
+        const info = await box.evaluate(el => {
+          const style = getComputedStyle(el);
+          return {
+            text: el.innerText,
+            opacity: style.opacity,
+            bg: style.backgroundColor,
+          };
+        });
+
+        // bỏ qua ô đã nhận (thường mờ hoặc xám)
+        if (info.opacity < 0.6) {
+          console.log("⏭️ Bỏ qua ô đã nhận:", info.text.trim());
+          continue;
+        }
+
+        console.log("🖱️ Click:", info.text.trim());
+        await box.click();
+        count++;
+
+        // chờ animation
+        await page.waitForTimeout(2000);
+      } catch (e) {
+        console.log("⚠️ Không click được 1 ô:", e.message);
       }
     }
 
+    console.log(`✅ Đã click ${count} ô!`);
+
   } catch (err) {
     console.log("❌ Lỗi:", err.message);
-
     try {
       await page.screenshot({ path: "error.png" });
-      console.log("📸 Đã chụp ảnh lỗi: error.png");
+      console.log("📸 Đã chụp ảnh lỗi!");
     } catch {}
   } finally {
     await browser.close();
